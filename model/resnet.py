@@ -573,5 +573,15 @@ def fuse_channel_resnet18_clustering(origin_model_a, origin_model_b, model_param
     return res_model, perm_size
 
 
+def fuse_channel_resnet50_clustering(origin_model_a, origin_model_b, model_param_a, model_param_b, regularizer=0.001):
+    axes_to_perm = get_axis_to_perm_ResNet50(override=True)
+    perm_to_axes = axes2perm_to_perm2axes(axes_to_perm)
+    param, perm_size = align_weight_clustering(perm_to_axes, axes_to_perm, model_param_a, model_param_b, regularizer=regularizer)
+    
+    res_model = copy.deepcopy(origin_model_a)
+    for p in param.keys():
+        get_module_by_name(res_model, p).data = param[p].data.clone().detach()
+    
+    return res_model, perm_size
 
 

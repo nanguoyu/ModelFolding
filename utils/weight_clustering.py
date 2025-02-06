@@ -45,7 +45,7 @@ class WeightClustering:
             X_scaled = scaler.transform(weight.cpu().numpy())
 
         pca = PCA(n_components=weight.shape[0])
-        X_scaled = pca.fit_transform(X_scaled)
+        # X_scaled = pca.fit_transform(X_scaled)
 
         km.fit(X_scaled)
 

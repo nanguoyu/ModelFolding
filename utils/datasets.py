@@ -194,3 +194,79 @@ def get_svhn_split_b(train=True, bs=512):
         dataset.data = dataset.data[np_target > split_label]
     data_loader = DataLoader(dataset, batch_size=bs, shuffle=True,num_workers=8)
     return data_loader
+
+def get_cifar100(train=True, bs=512): #8
+    path   = os.path.dirname(os.path.abspath(__file__))
+    
+    normalize = torchvision.transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
+    transform_train = torchvision.transforms.Compose([torchvision.transforms.RandomCrop(32, padding=4),torchvision.transforms.RandomHorizontalFlip(), torchvision.transforms.RandomRotation(15), torchvision.transforms.ToTensor(), normalize])
+    transform_test = torchvision.transforms.Compose([torchvision.transforms.ToTensor(), normalize])
+        
+    transform = transform_train
+    if train is False:
+        transform = transform_test
+
+    mnistTrainSet = torchvision.datasets.CIFAR100(
+        root=path + '/data', 
+        train=train,
+        download=True, 
+        transform=transform
+    )
+
+    loader = torch.utils.data.DataLoader(
+        mnistTrainSet,
+        batch_size=bs, #256
+        shuffle=True,
+        num_workers=8)
+    
+    return loader
+
+def get_cifar100_split_a(train=True, bs=512):
+    get_dataset = getattr(datasets, "CIFAR100")
+    mean=[0.5071, 0.4865, 0.4409]
+    std=[0.2673, 0.2564, 0.2762]
+    split_label = 50
+    datadir = os.path.dirname(os.path.abspath(__file__)) + '/data'
+    normalize = transforms.Normalize(mean=mean, std=std)
+    tr_transform = transforms.Compose([transforms.RandomCrop(32, padding=4),transforms.RandomHorizontalFlip(), transforms.RandomRotation(15), transforms.ToTensor(), normalize])
+    val_transform = transforms.Compose([transforms.ToTensor(), normalize])
+    if train:
+        dataset = get_dataset(root=datadir, train=True, download=True, transform=tr_transform)
+        np_target = np.array(dataset.targets)
+        dataset.targets = np_target[np_target < split_label]
+        dataset.targets = dataset.targets[dataset.targets < split_label]
+        dataset.data = dataset.data[np_target < split_label]
+    else:
+        dataset = get_dataset(root=datadir, train=False, download=True, transform=val_transform)
+        np_target = np.array(dataset.targets)
+        dataset.targets = np_target[np_target < split_label]
+        dataset.targets = dataset.targets[dataset.targets < split_label]
+        dataset.data = dataset.data[np_target < split_label]
+    data_loader = DataLoader(dataset, batch_size=bs, shuffle=True,num_workers=8)
+    print("Using PyTorch dataset.")
+    return data_loader
+
+def get_cifar100_split_b(train=True, bs=512):
+    get_dataset = getattr(datasets, "CIFAR100")
+    mean=[0.5071, 0.4865, 0.4409]
+    std=[0.2673, 0.2564, 0.2762]
+    split_label = 49
+    datadir = os.path.dirname(os.path.abspath(__file__)) + '/data'
+    normalize = transforms.Normalize(mean=mean, std=std)
+    tr_transform = transforms.Compose([transforms.RandomCrop(32, padding=4),transforms.RandomHorizontalFlip(), transforms.RandomRotation(15), transforms.ToTensor(), normalize])
+    val_transform = transforms.Compose([transforms.ToTensor(), normalize])
+    if train:
+        dataset = get_dataset(root=datadir, train=True, download=True, transform=tr_transform)
+        np_target = np.array(dataset.targets)
+        dataset.targets = np_target[np_target > split_label]
+        dataset.targets = dataset.targets[dataset.targets > split_label]
+        dataset.data = dataset.data[np_target > split_label]
+    else:
+        dataset = get_dataset(root=datadir, train=False, download=True, transform=val_transform)
+        np_target = np.array(dataset.targets)
+        dataset.targets = np_target[np_target > split_label]
+        dataset.targets = dataset.targets[dataset.targets > split_label]
+        dataset.data = dataset.data[np_target > split_label]
+    data_loader = DataLoader(dataset, batch_size=bs, shuffle=True,num_workers=8)
+    print("Using PyTorch dataset.")
+    return data_loader
