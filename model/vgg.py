@@ -90,10 +90,10 @@ def merge_channel_vgg11_clustering_approx_repair(origin_model, model_param, max_
     return origin_model, perm_size
 
 
-def fuse_channel_vgg11_clustering(origin_model_a, origin_model_b, model_param_a, model_param_b):
+def fuse_channel_vgg11_clustering(origin_model_a, origin_model_b, model_param_a, model_param_b, regularizer=0.001):
     axes_to_perm = get_axis_to_perm(origin_model_a)
     perm_to_axes = axes2perm_to_perm2axes(axes_to_perm)
-    param, perm_size = align_weight_clustering(perm_to_axes, axes_to_perm, model_param_a, model_param_b)
+    param, perm_size = align_weight_clustering(perm_to_axes, axes_to_perm, model_param_a, model_param_b, regularizer=regularizer)
     
     res_model = copy.deepcopy(origin_model_a)
     for p in param.keys():

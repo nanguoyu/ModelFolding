@@ -1,6 +1,6 @@
 from model.resnet import ResNet18, fuse_channel_resnet18_clustering
 from utils.utils import load_model, eval_model, LayerActivationHook
-from utils.datasets import get_cifar10
+from utils.datasets import get_svhn
 
 import numpy as np
 import argparse
@@ -75,8 +75,8 @@ def main():
         }
     )
 
-    test_loader = get_cifar10(train=False)
-    train_loader = get_cifar10(train=True, bs=1024)
+    test_loader = get_svhn(train=False)
+    train_loader = get_svhn(train=True, bs=1024)
 
     model_a.eval()
     model_b.eval()
@@ -95,4 +95,4 @@ def main():
 
 if __name__ == "__main__":
   main()
-# CUDA_VISIBLE_DEVICES=3 python resnet18_cifar10_weight_merging.py --checkpoint_a ~/project/model_folding_public/weights/resnet18_CIFAR10_init1.pth --checkpoint_b ~/project/model_folding_public/weights/resnet18_CIFAR10_init2.pth
+# CUDA_VISIBLE_DEVICES=3 python resnet18_svhn_weight_merging.py --checkpoint_a ~/project/model_folding_public/weights/resnet18_SVHN_init1.pth --checkpoint_b ~/project/model_folding_public/weights/resnet18_SVHN_init2.pth

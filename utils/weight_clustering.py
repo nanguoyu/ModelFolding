@@ -332,8 +332,8 @@ def align_weight_clustering(perm_to_axes, axes_to_perm, params_a, params_b, regu
         merge = true_merges[p_name]
         unmerge = unmerges[p_name]
         
-        params_b_f = merge_channel_align(perm_to_axes, params_b_f, p_name, merge[1], unmerge[1], custom_merger=custom_merger)
-        params_a_f = merge_channel_align(perm_to_axes, params_a_f, p_name, merge[0], unmerge[0], custom_merger=custom_merger)
+        params_b_f = merge_channel_align(perm_to_axes, params_b_f, p_name, merge[1].to("cuda"), unmerge[1].to("cuda"), custom_merger=custom_merger)
+        params_a_f = merge_channel_align(perm_to_axes, params_a_f, p_name, merge[0].to("cuda"), unmerge[0].to("cuda"), custom_merger=custom_merger)
 
     for wk in params.keys():
         params[wk] = (params_a_f[wk] + params_b_f[wk])

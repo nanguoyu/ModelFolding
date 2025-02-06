@@ -1,7 +1,7 @@
 import os
 import torch
 import torchvision
-
+import numpy as np
 from torchvision import transforms, datasets
 from torch.utils.data import DataLoader
 
@@ -76,3 +76,121 @@ def get_cifar10(train=True, bs=512): #8
         num_workers=8)
     
     return loader
+
+
+def get_cifar10_split_a(train=True, bs=512):
+    get_dataset = getattr(datasets, "CIFAR10")
+    mean=[0.4914, 0.4822, 0.4465]
+    std=[0.2470, 0.2435, 0.2616]
+    split_label = 5
+    datadir = os.path.dirname(os.path.abspath(__file__)) + '/data'
+    normalize = transforms.Normalize(mean=mean, std=std)
+    tr_transform = transforms.Compose([transforms.RandomCrop(32, padding=4),transforms.RandomHorizontalFlip(), transforms.RandomRotation(15), transforms.ToTensor(), normalize])
+    val_transform = transforms.Compose([transforms.ToTensor(), normalize])
+    if train:
+        dataset = get_dataset(root=datadir, train=True, download=True, transform=tr_transform)
+        np_target = np.array(dataset.targets)
+        dataset.targets = np_target[np_target < split_label]
+        dataset.targets = dataset.targets[dataset.targets < split_label]
+        dataset.data = dataset.data[np_target < split_label]
+    else:
+        dataset = get_dataset(root=datadir, train=False, download=True, transform=val_transform)
+        np_target = np.array(dataset.targets)
+        dataset.targets = np_target[np_target < split_label]
+        dataset.targets = dataset.targets[dataset.targets < split_label]
+        dataset.data = dataset.data[np_target < split_label]
+    data_loader = DataLoader(dataset, batch_size=bs, shuffle=True,num_workers=8)
+    print("Using PyTorch dataset.")
+    return data_loader
+
+def get_cifar10_split_b(train=True, bs=512):
+    get_dataset = getattr(datasets, "CIFAR10")
+    mean=[0.4914, 0.4822, 0.4465]
+    std=[0.2470, 0.2435, 0.2616]
+    split_label = 4
+    datadir = os.path.dirname(os.path.abspath(__file__)) + '/data'
+    normalize = transforms.Normalize(mean=mean, std=std)
+    tr_transform = transforms.Compose([transforms.RandomCrop(32, padding=4),transforms.RandomHorizontalFlip(), transforms.RandomRotation(15), transforms.ToTensor(), normalize])
+    val_transform = transforms.Compose([transforms.ToTensor(), normalize])
+    if train:
+        dataset = get_dataset(root=datadir, train=True, download=True, transform=tr_transform)
+        np_target = np.array(dataset.targets)
+        dataset.targets = np_target[np_target > split_label]
+        dataset.targets = dataset.targets[dataset.targets > split_label]
+        dataset.data = dataset.data[np_target > split_label]
+    else:
+        dataset = get_dataset(root=datadir, train=False, download=True, transform=val_transform)
+        np_target = np.array(dataset.targets)
+        dataset.targets = np_target[np_target > split_label]
+        dataset.targets = dataset.targets[dataset.targets > split_label]
+        dataset.data = dataset.data[np_target > split_label]
+    data_loader = DataLoader(dataset, batch_size=bs, shuffle=True,num_workers=8)
+    print("Using PyTorch dataset.")
+    return data_loader
+
+def get_svhn(train=True, bs=512):
+    mean=[0.4914, 0.4822, 0.4465]
+    std=[0.2470, 0.2435, 0.2616]
+    get_dataset = getattr(datasets, "SVHN")
+    datadir = os.path.dirname(os.path.abspath(__file__)) + '/data'
+    
+    normalize = transforms.Normalize(mean=mean, std=std)
+    tr_transform = transforms.Compose([transforms.Resize(32), transforms.ToTensor(), normalize])
+    val_transform = transforms.Compose([transforms.Resize(32), transforms.ToTensor(), normalize])
+    if train:
+        dataset = get_dataset(root=datadir, split='train', download=True, transform=tr_transform)
+    else:
+        dataset = get_dataset(root=datadir, split='test', download=True, transform=val_transform)
+    data_loader = DataLoader(dataset, batch_size=bs, shuffle=True,num_workers=8)
+    return data_loader
+
+def get_svhn_split_a(train=True, bs=512):
+    mean=[0.4914, 0.4822, 0.4465]
+    std=[0.2470, 0.2435, 0.2616]
+    get_dataset = getattr(datasets, "SVHN")
+    datadir = os.path.dirname(os.path.abspath(__file__)) + '/data'
+
+    split_label = 5
+    normalize = transforms.Normalize(mean=mean, std=std)
+    tr_transform = transforms.Compose([transforms.RandomCrop(32, padding=4),transforms.RandomHorizontalFlip(), transforms.RandomRotation(15), transforms.ToTensor(), normalize])
+    val_transform = transforms.Compose([transforms.ToTensor(), normalize])
+    if train:
+        dataset = get_dataset(root=datadir, split='train', download=True, transform=tr_transform)
+        np_target = np.array(dataset.labels)
+        dataset.labels = np_target[np_target < split_label]
+        dataset.labels = dataset.labels[dataset.labels < split_label]
+        dataset.data = dataset.data[np_target < split_label]
+    else:
+        dataset = get_dataset(root=datadir, split='test', download=True, transform=val_transform)
+        np_target = np.array(dataset.labels)
+        dataset.labels = np_target[np_target < split_label]
+        dataset.labels = dataset.labels[dataset.labels < split_label]
+        dataset.data = dataset.data[np_target < split_label]
+    data_loader = DataLoader(dataset, batch_size=bs, shuffle=True,num_workers=8)
+
+    return data_loader
+
+def get_svhn_split_b(train=True, bs=512):
+    mean=[0.4914, 0.4822, 0.4465]
+    std=[0.2470, 0.2435, 0.2616]
+    get_dataset = getattr(datasets, "SVHN")
+    datadir = os.path.dirname(os.path.abspath(__file__)) + '/data'
+
+    split_label = 4
+    normalize = transforms.Normalize(mean=mean, std=std)
+    tr_transform = transforms.Compose([transforms.RandomCrop(32, padding=4),transforms.RandomHorizontalFlip(), transforms.RandomRotation(15), transforms.ToTensor(), normalize])
+    val_transform = transforms.Compose([transforms.ToTensor(), normalize])
+    if train:
+        dataset = get_dataset(root=datadir, split='train', download=True, transform=tr_transform)
+        np_target = np.array(dataset.labels)
+        dataset.labels = np_target[np_target > split_label]
+        dataset.labels = dataset.labels[dataset.labels > split_label]
+        dataset.data = dataset.data[np_target > split_label]
+    else:
+        dataset = get_dataset(root=datadir, split='test', download=True, transform=val_transform)
+        np_target = np.array(dataset.labels)
+        dataset.labels = np_target[np_target > split_label]
+        dataset.labels = dataset.labels[dataset.labels > split_label]
+        dataset.data = dataset.data[np_target > split_label]
+    data_loader = DataLoader(dataset, batch_size=bs, shuffle=True,num_workers=8)
+    return data_loader
