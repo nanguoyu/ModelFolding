@@ -3,7 +3,89 @@ import torch
 import torchvision
 import numpy as np
 from torchvision import transforms, datasets
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader
+import matplotlib.pyplot as plt
+import pandas as pd
+import collections
+
+def plot_class_distribution(dataset, dataset_name):
+    class_counts = collections.Counter(dataset.labels)
+    class_labels = [str(i) for i in range(10)]
+
+    df = pd.DataFrame(list(class_counts.items()), columns=['Class Index', 'Sample Count'])
+    df['Class Name'] = df['Class Index'].map(lambda x: class_labels[x])
+
+    df = df.sort_values(by='Sample Count', ascending=False)
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(df['Class Name'], df['Sample Count'])
+    plt.xticks(rotation=0)
+    plt.xlabel('Class')
+    plt.ylabel('Sample Count')
+    plt.title(f'{dataset_name} Class Distribution')
+    plt.savefig(f'{dataset_name}_class_distribution.png')
+
+SEED = 42
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+
+class BalancedDataset(Dataset):
+    def __init__(self, dataset, target_count=None):
+        """
+        :param dataset: Original dataset
+        :param target_count: Target number of samples per class (default is the mean number of samples across all classes)
+        """
+        super().__init__()
+
+        # Ensure compatibility with different versions of torchvision
+        if hasattr(dataset, 'labels'):
+            labels = np.array(dataset.labels)
+            self.label_attr = 'labels'
+        elif hasattr(dataset, 'targets'):
+            labels = np.array(dataset.targets)
+            self.label_attr = 'targets'
+        else:
+            raise AttributeError("Dataset does not have 'labels' or 'targets' attribute.")
+
+        self.dataset = dataset
+        self.original_indices = np.arange(len(dataset))
+
+        # Compute class sample counts
+        class_counts = np.bincount(labels)
+        num_classes = len(class_counts)
+
+        # Compute target number of samples per class (default: mean sample count)
+        if target_count is None:
+            target_count = int(np.mean(class_counts))
+
+        # Generate balanced indices
+        balanced_indices = []
+        for cls in range(num_classes):
+            cls_indices = np.where(labels == cls)[0]
+
+            # Oversample or undersample
+            if len(cls_indices) < target_count:
+                sampled_indices = np.random.choice(cls_indices, target_count, replace=True)
+            else:
+                sampled_indices = np.random.choice(cls_indices, target_count, replace=False)
+
+            balanced_indices.extend(sampled_indices)
+
+        # Shuffle indices
+        np.random.shuffle(balanced_indices)
+
+        # Store balanced dataset indices
+        self.indices = balanced_indices
+        self.labels = labels[self.indices]  # Balanced labels
+        if hasattr(dataset, 'data'):
+            self.data = dataset.data[self.indices]  # Filter dataset data if it exists
+
+    def __len__(self):
+        return len(self.indices)
+
+    def __getitem__(self, idx):
+        original_idx = self.indices[idx]  # Get original dataset index
+        return self.dataset[original_idx]  # Return sample from the original dataset
 
 
 def get_cifar100(train=True, bs=512): #8
@@ -156,12 +238,16 @@ def get_svhn_split_a(train=True, bs=512):
     val_transform = transforms.Compose([transforms.ToTensor(), normalize])
     if train:
         dataset = get_dataset(root=datadir, split='train', download=True, transform=tr_transform)
+        dataset = BalancedDataset(dataset)
+        plot_class_distribution(dataset, "SVHN Split A Train")
         np_target = np.array(dataset.labels)
         dataset.labels = np_target[np_target < split_label]
         dataset.labels = dataset.labels[dataset.labels < split_label]
         dataset.data = dataset.data[np_target < split_label]
     else:
         dataset = get_dataset(root=datadir, split='test', download=True, transform=val_transform)
+        dataset = BalancedDataset(dataset)
+        plot_class_distribution(dataset, "SVHN Split A Test")
         np_target = np.array(dataset.labels)
         dataset.labels = np_target[np_target < split_label]
         dataset.labels = dataset.labels[dataset.labels < split_label]
@@ -182,12 +268,16 @@ def get_svhn_split_b(train=True, bs=512):
     val_transform = transforms.Compose([transforms.ToTensor(), normalize])
     if train:
         dataset = get_dataset(root=datadir, split='train', download=True, transform=tr_transform)
+        dataset = BalancedDataset(dataset)
+        plot_class_distribution(dataset, "SVHN Split B Train")
         np_target = np.array(dataset.labels)
         dataset.labels = np_target[np_target > split_label]
         dataset.labels = dataset.labels[dataset.labels > split_label]
         dataset.data = dataset.data[np_target > split_label]
     else:
         dataset = get_dataset(root=datadir, split='test', download=True, transform=val_transform)
+        dataset = BalancedDataset(dataset)
+        plot_class_distribution(dataset, "SVHN Split B Test")
         np_target = np.array(dataset.labels)
         dataset.labels = np_target[np_target > split_label]
         dataset.labels = dataset.labels[dataset.labels > split_label]

@@ -97,14 +97,14 @@ def main():
     print(f"model_a on split a dataset acc: {acc * 100:.2f}")
 
 
-    acc, _ = eval_model(model_a, test_loader_b)
-    print(f"model_a on split b dataset acc: {acc * 100:.2f}")
+    # acc, _ = eval_model(model_a, test_loader_b)
+    # print(f"model_a on split b dataset acc: {acc * 100:.2f}")
 
     acc, _ = eval_model(model_b, test_loader_b)
     print(f"model_b on split b dataset acc: {acc * 100:.2f}")
 
-    acc, _ = eval_model(model_b, test_loader_a)
-    print(f"model_b on split a dataset acc: {acc * 100:.2f}")
+    # acc, _ = eval_model(model_b, test_loader_a)
+    # print(f"model_b on split a dataset acc: {acc * 100:.2f}")
 
     acc, _ = eval_model(model_a, test_loader)
     print(f"model_a on joint dataset acc: {acc * 100:.2f}")
