@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 import pandas as pd
 import collections
-
+import copy
 def plot_class_distribution(dataset, dataset_name):
     class_counts = collections.Counter(dataset.labels)
     class_labels = [str(i) for i in range(10)]
@@ -25,68 +25,53 @@ def plot_class_distribution(dataset, dataset_name):
     plt.title(f'{dataset_name} Class Distribution')
     plt.savefig(f'{dataset_name}_class_distribution.png')
 
-SEED = 42
-np.random.seed(SEED)
-torch.manual_seed(SEED)
 
-class BalancedDataset(Dataset):
-    def __init__(self, dataset, target_count=None):
-        """
-        :param dataset: Original dataset
-        :param target_count: Target number of samples per class (default is the mean number of samples across all classes)
-        """
-        super().__init__()
 
-        # Ensure compatibility with different versions of torchvision
-        if hasattr(dataset, 'labels'):
-            labels = np.array(dataset.labels)
-            self.label_attr = 'labels'
-        elif hasattr(dataset, 'targets'):
-            labels = np.array(dataset.targets)
-            self.label_attr = 'targets'
-        else:
-            raise AttributeError("Dataset does not have 'labels' or 'targets' attribute.")
+def balance_svhn_dataset(svhn_dataset, seed=42):
+    """
+    Balances an SVHN dataset created via torchvision.datasets.SVHN by removing extra samples 
+    so that each class retains only as many samples as the class with the fewest samples.
+    The returned dataset remains of the same type as the original SVHN dataset, preserving its 
+    methods and properties.
 
-        self.dataset = dataset
-        self.original_indices = np.arange(len(dataset))
+    Args:
+        svhn_dataset: An instance of the SVHN dataset (e.g., created by SVHN(root=..., split='train', ...)).
+        seed: Random seed (default is 42) to ensure reproducibility of the random sampling.
 
-        # Compute class sample counts
-        class_counts = np.bincount(labels)
-        num_classes = len(class_counts)
+    Returns:
+        A balanced SVHN dataset instance.
+    """
+    # Create a deep copy of the dataset to avoid modifying the original dataset.
+    dataset = copy.deepcopy(svhn_dataset)
 
-        # Compute target number of samples per class (default: mean sample count)
-        if target_count is None:
-            target_count = int(np.mean(class_counts))
+    # Convert the labels to a NumPy array for easier processing.
+    labels = np.array(dataset.labels)
+    
+    # Determine the unique labels and the corresponding counts for each class.
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    # Find the minimum count among all classes.
+    min_count = counts.min()
 
-        # Generate balanced indices
-        balanced_indices = []
-        for cls in range(num_classes):
-            cls_indices = np.where(labels == cls)[0]
-
-            # Oversample or undersample
-            if len(cls_indices) < target_count:
-                sampled_indices = np.random.choice(cls_indices, target_count, replace=True)
-            else:
-                sampled_indices = np.random.choice(cls_indices, target_count, replace=False)
-
-            balanced_indices.extend(sampled_indices)
-
-        # Shuffle indices
-        np.random.shuffle(balanced_indices)
-
-        # Store balanced dataset indices
-        self.indices = balanced_indices
-        self.labels = labels[self.indices]  # Balanced labels
-        if hasattr(dataset, 'data'):
-            self.data = dataset.data[self.indices]  # Filter dataset data if it exists
-
-    def __len__(self):
-        return len(self.indices)
-
-    def __getitem__(self, idx):
-        original_idx = self.indices[idx]  # Get original dataset index
-        return self.dataset[original_idx]  # Return sample from the original dataset
-
+    # For each class, randomly select min_count indices.
+    balanced_indices = []
+    rng = np.random.RandomState(seed)
+    for label in unique_labels:
+        # Get indices for the current class.
+        cls_indices = np.where(labels == label)[0]
+        # Randomly select min_count indices without replacement.
+        selected = rng.choice(cls_indices, size=min_count, replace=False)
+        balanced_indices.extend(selected)
+    
+    balanced_indices = np.array(balanced_indices)
+    # Optionally, shuffle the indices to mix samples from different classes.
+    rng.shuffle(balanced_indices)
+    
+    # Update the dataset with the balanced subset of data and labels.
+    dataset.data = dataset.data[balanced_indices]
+    dataset.labels = np.array(dataset.labels)[balanced_indices]
+    
+    return dataset
+    
 
 def get_cifar100(train=True, bs=512): #8
     path   = os.path.dirname(os.path.abspath(__file__))
@@ -238,7 +223,7 @@ def get_svhn_split_a(train=True, bs=512):
     val_transform = transforms.Compose([transforms.ToTensor(), normalize])
     if train:
         dataset = get_dataset(root=datadir, split='train', download=True, transform=tr_transform)
-        dataset = BalancedDataset(dataset)
+        dataset = balance_svhn_dataset(dataset)
         plot_class_distribution(dataset, "SVHN Split A Train")
         np_target = np.array(dataset.labels)
         dataset.labels = np_target[np_target < split_label]
@@ -246,7 +231,7 @@ def get_svhn_split_a(train=True, bs=512):
         dataset.data = dataset.data[np_target < split_label]
     else:
         dataset = get_dataset(root=datadir, split='test', download=True, transform=val_transform)
-        dataset = BalancedDataset(dataset)
+        dataset = balance_svhn_dataset(dataset)
         plot_class_distribution(dataset, "SVHN Split A Test")
         np_target = np.array(dataset.labels)
         dataset.labels = np_target[np_target < split_label]
@@ -268,7 +253,7 @@ def get_svhn_split_b(train=True, bs=512):
     val_transform = transforms.Compose([transforms.ToTensor(), normalize])
     if train:
         dataset = get_dataset(root=datadir, split='train', download=True, transform=tr_transform)
-        dataset = BalancedDataset(dataset)
+        dataset = balance_svhn_dataset(dataset)
         plot_class_distribution(dataset, "SVHN Split B Train")
         np_target = np.array(dataset.labels)
         dataset.labels = np_target[np_target > split_label]
@@ -276,7 +261,7 @@ def get_svhn_split_b(train=True, bs=512):
         dataset.data = dataset.data[np_target > split_label]
     else:
         dataset = get_dataset(root=datadir, split='test', download=True, transform=val_transform)
-        dataset = BalancedDataset(dataset)
+        dataset = balance_svhn_dataset(dataset)
         plot_class_distribution(dataset, "SVHN Split B Test")
         np_target = np.array(dataset.labels)
         dataset.labels = np_target[np_target > split_label]

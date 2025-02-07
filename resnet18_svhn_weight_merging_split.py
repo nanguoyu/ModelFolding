@@ -74,12 +74,12 @@ def main():
         }
     )
 
-    with torch.no_grad():
-        model_b.linear.weight[:5] = 0.0
-        model_b.linear.bias[:5] = 0.0
+    # with torch.no_grad():
+    #     model_b.linear.weight[:5] = 0.0
+    #     model_b.linear.bias[:5] = 0.0
 
-        model_a.linear.weight[5:] = 0.0
-        model_a.linear.bias[5:] = 0.0
+    #     model_a.linear.weight[5:] = 0.0
+    #     model_a.linear.bias[5:] = 0.0
 
     model_a.cuda()
     model_b.cuda()
